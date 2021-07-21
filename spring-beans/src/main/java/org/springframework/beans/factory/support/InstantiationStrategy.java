@@ -37,11 +37,12 @@ public interface InstantiationStrategy {
 
 	/**
 	 * Return an instance of the bean with the given name in this factory.
-	 * @param bd the bean definition
+	 *
+	 * @param bd       the bean definition
 	 * @param beanName the name of the bean when it is created in this context.
-	 * The name can be {@code null} if we are autowiring a bean which doesn't
-	 * belong to the factory.
-	 * @param owner the owning BeanFactory
+	 *                 The name can be {@code null} if we are autowiring a bean which doesn't
+	 *                 belong to the factory.
+	 * @param owner    the owning BeanFactory
 	 * @return a bean instance for this bean definition
 	 * @throws BeansException if the instantiation attempt failed
 	 */

@@ -73,6 +73,9 @@ public class XmlWebApplicationContext extends AbstractRefreshableWebApplicationC
 
 	/**
 	 * Loads the bean definitions via an XmlBeanDefinitionReader.
+	 *
+	 * <p>我们可以看到，此方法将通过一个 XmlBeanDefinitionReader 实例来加载各个 Bean。</p>
+	 *
 	 * @see org.springframework.beans.factory.xml.XmlBeanDefinitionReader
 	 * @see #initBeanDefinitionReader
 	 * @see #loadBeanDefinitions
@@ -80,17 +83,23 @@ public class XmlWebApplicationContext extends AbstractRefreshableWebApplicationC
 	@Override
 	protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throws BeansException, IOException {
 		// Create a new XmlBeanDefinitionReader for the given BeanFactory.
+		// 给这个 BeanFactory 实例化一个 XmlBeanDefinitionReader
 		XmlBeanDefinitionReader beanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);
 
 		// Configure the bean definition reader with this context's
 		// resource loading environment.
+		// 初始化 BeanDefinitionReader，其实这个是提供给子类覆写的，
+		// 我看了一下，没有类覆写这个方法，我们姑且当做不重要吧
 		beanDefinitionReader.setEnvironment(getEnvironment());
 		beanDefinitionReader.setResourceLoader(this);
 		beanDefinitionReader.setEntityResolver(new ResourceEntityResolver(this));
 
 		// Allow a subclass to provide custom initialization of the reader,
 		// then proceed with actually loading the bean definitions.
+		// 初始化 BeanDefinitionReader，其实这个是提供给子类覆写的，
+		// 我看了一下，没有类覆写这个方法，我们姑且当做不重要吧
 		initBeanDefinitionReader(beanDefinitionReader);
+		// 重点来了，继续往下
 		loadBeanDefinitions(beanDefinitionReader);
 	}
 
@@ -135,10 +144,9 @@ public class XmlWebApplicationContext extends AbstractRefreshableWebApplicationC
 	@Override
 	protected String[] getDefaultConfigLocations() {
 		if (getNamespace() != null) {
-			return new String[] {DEFAULT_CONFIG_LOCATION_PREFIX + getNamespace() + DEFAULT_CONFIG_LOCATION_SUFFIX};
-		}
-		else {
-			return new String[] {DEFAULT_CONFIG_LOCATION};
+			return new String[]{DEFAULT_CONFIG_LOCATION_PREFIX + getNamespace() + DEFAULT_CONFIG_LOCATION_SUFFIX};
+		} else {
+			return new String[]{DEFAULT_CONFIG_LOCATION};
 		}
 	}
 
