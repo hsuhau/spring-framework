@@ -327,6 +327,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @param cacheKey the cache key for metadata access
 	 * @return a proxy wrapping the bean, or the raw bean instance as-is
 	 */
+	//	继续往里看 wrapIfNecessary(...) 方法，这个方法将返回代理类（如果需要的话）：
 	protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
 		if (beanName != null && this.targetSourcedBeans.contains(beanName)) {
 			return bean;
@@ -340,9 +341,16 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		}
 
 		// Create proxy if we have advice.
+		// 返回匹配当前 bean 的所有的 advisor、advice、interceptor
+		// 对于本文的例子，"userServiceImpl" 和 "OrderServiceImpl" 这两个 bean 创建过程中，
+		// 到这边的时候都会返回两个 advisor
+
+		// getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null)，这个方法将得到所有的可用于拦截当前 bean 的 advisor、advice、interceptor。
+		// 另一个就是 TargetSource 这个概念，它用于封装真实实现类的信息，上面用了 SingletonTargetSource 这个实现类，其实我们这里也不太需要关心这个，知道有这么回事就可以了。
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
 		if (specificInterceptors != DO_NOT_PROXY) {
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
+			// 创建代理...创建代理...创建代理...
 			Object proxy = createProxy(
 					bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
 			this.proxyTypes.put(cacheKey, proxy.getClass());
@@ -431,6 +439,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @return the AOP proxy for the bean
 	 * @see #buildAdvisors
 	 */
+	// 注意看这个方法的几个参数，
+	//   第三个参数携带了所有的 advisors
+	//   第四个参数 targetSource 携带了真实实现的信息
 	protected Object createProxy(
 			Class<?> beanClass, String beanName, Object[] specificInterceptors, TargetSource targetSource) {
 
@@ -438,18 +449,28 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			AutoProxyUtils.exposeTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName, beanClass);
 		}
 
+		// 创建 ProxyFactory 实例
 		ProxyFactory proxyFactory = new ProxyFactory();
 		proxyFactory.copyFrom(this);
 
+		// 在 schema-based 的配置方式中，我们介绍过，如果希望使用 CGLIB 来代理接口，可以配置
+		// proxy-target-class="true",这样不管有没有接口，都使用 CGLIB 来生成代理：
+		//   <aop:config proxy-target-class="true">......</aop:config>
 		if (!proxyFactory.isProxyTargetClass()) {
 			if (shouldProxyTargetClass(beanClass, beanName)) {
 				proxyFactory.setProxyTargetClass(true);
 			}
 			else {
+				// 点进去稍微看一下代码就知道了，主要就两句：
+				// 1. 有接口的，调用一次或多次：proxyFactory.addInterface(ifc);
+				// 2. 没有接口的，调用：proxyFactory.setProxyTargetClass(true);
 				evaluateProxyInterfaces(beanClass, proxyFactory);
 			}
 		}
 
+		// 这个方法会返回匹配了当前 bean 的 advisors 数组
+		// 对于本文的例子，"userServiceImpl" 和 "OrderServiceImpl" 到这边的时候都会返回两个 advisor
+		// 注意：如果 specificInterceptors 中有 advice 和 interceptor，它们也会被包装成 advisor，进去看下源码就清楚了
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
 		proxyFactory.addAdvisors(advisors);
 		proxyFactory.setTargetSource(targetSource);

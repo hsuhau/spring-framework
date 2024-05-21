@@ -59,6 +59,12 @@ public class AopNamespaceHandler extends NamespaceHandlerSupport {
 	 * '{@code config}', '{@code spring-configured}', '{@code aspectj-autoproxy}'
 	 * and '{@code scoped-proxy}' tags.
 	 */
+	// 基于注解的 Spring AOP 源码分析
+	//上面我们走马观花地介绍了使用 DefaultAdvisorAutoProxyCreator 来实现 Spring AOP 的源码，这里，我们也同样走马观花地来看下 @AspectJ 的实现原理。
+	//
+	//我们之前说过，开启 @AspectJ 的两种方式，一个是 <aop:aspectj-autoproxy/>，一个是 @EnableAspectJAutoProxy，它们的原理是一样的，都是通过注册一个 bean 来实现的。
+	//
+	//解析 <aop:aspectj-autoproxy/> 需要用到 AopNamespaceHandler：
 	@Override
 	public void init() {
 		// In 2.0 XSD as well as in 2.5+ XSDs
