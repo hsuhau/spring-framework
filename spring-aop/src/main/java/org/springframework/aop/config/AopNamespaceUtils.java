@@ -70,6 +70,7 @@ public abstract class AopNamespaceUtils {
 		registerComponentIfNecessary(beanDefinition, parserContext);
 	}
 
+//	最终我们看到，Spring 注册了一个 AnnotationAwareAspectJAutoProxyCreator 的 bean，beanName 为："org.springframework.aop.config.internalAutoProxyCreator"。
 	public static void registerAspectJAnnotationAutoProxyCreatorIfNecessary(
 			ParserContext parserContext, Element sourceElement) {
 

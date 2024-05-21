@@ -1021,6 +1021,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param mbd the bean definition for the bean
 	 * @return the shortcut-determined bean instance, or {@code null} if none
 	 */
+	// 点进去看 resolveBeforeInstantiation(beanName, mbdToUse) 方法，然后就会导到 InstantiationAwareBeanPostProcessor 的 postProcessBeforeInstantiation 方法，对于我们分析的 AOP 来说，该方法的实现在 AbstractAutoProxyCreator 类中：
 	protected Object resolveBeforeInstantiation(String beanName, RootBeanDefinition mbd) {
 		Object bean = null;
 		if (!Boolean.FALSE.equals(mbd.beforeInstantiationResolved)) {
@@ -1658,6 +1659,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					beanName, "Invocation of init method failed", ex);
 		}
 		if (mbd == null || !mbd.isSynthetic()) {
+			// 我们关注的重点是这里！！！
+			// 2. 执行每一个 BeanPostProcessor 的 postProcessAfterInitialization 方法
 			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
 		}
 		return wrappedBean;

@@ -151,6 +151,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 		return getProxy(null);
 	}
 
+//	通过 CGLIB 生成代理的代码量有点大，我们就不进行深入分析了，我们看下大体的骨架。它的 getProxy(classLoader) 方法在父类 CglibAopProxy 类中：
 	@Override
 	public Object getProxy(ClassLoader classLoader) {
 		if (logger.isDebugEnabled()) {
