@@ -83,12 +83,15 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	/** Cache of singleton objects: bean name --> bean instance */
+	// 一级缓存 		存放完整Bean对象（实例化+初始化）x
 	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<String, Object>(256);
 
 	/** Cache of singleton factories: bean name --> ObjectFactory */
+	// 二级缓存       存放一个lambda表达式
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<String, ObjectFactory<?>>(16);
 
 	/** Cache of early singleton objects: bean name --> bean instance */
+	// 三级缓存       存放一个半成品bean对象（只是实例化还未初始化），提前暴露
 	private final Map<String, Object> earlySingletonObjects = new HashMap<String, Object>(16);
 
 	/** Set of registered singletons, containing the bean names in registration order */
@@ -157,12 +160,17 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param beanName the name of the bean
 	 * @param singletonFactory the factory for the singleton object
 	 */
+	// 其中singletonFactory是一个lambda表达式
 	protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(singletonFactory, "Singleton factory must not be null");
 		synchronized (this.singletonObjects) {
+			// 如果我们一级缓存中不存在这个叫beanName的bean
 			if (!this.singletonObjects.containsKey(beanName)) {
+				// 放入三级缓存中
 				this.singletonFactories.put(beanName, singletonFactory);
+				// 把二级缓存中叫beanName的半成品bean删除
 				this.earlySingletonObjects.remove(beanName);
+				// 标记当前注册的bean
 				this.registeredSingletons.add(beanName);
 			}
 		}
@@ -181,16 +189,30 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param allowEarlyReference whether early references should be created or not
 	 * @return the registered singleton object, or {@code null} if none found
 	 */
+	// 获取缓存 bean 的顺序是，先从一级缓存中取，若不存在，从二级缓存中取，若还是不存在，则从三级缓存中取
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
+		// 一级缓存中是否存在
 		Object singletonObject = this.singletonObjects.get(beanName);
+		// 如果想要获取的bean正在创建中且无一级缓存
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
+			// 尝试二级缓存
 			synchronized (this.singletonObjects) {
+				// 获取二级缓存
 				singletonObject = this.earlySingletonObjects.get(beanName);
 				if (singletonObject == null && allowEarlyReference) {
+					// 获取三级缓存
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 					if (singletonFactory != null) {
+						// 调用三级缓存，这个地方就会调用我们的lambda表达式了
+						/**
+						 *() -> getEarlyBeanReference(beanName, mbd, bean)
+						 *这里就是我们解决办法的地方，因为所有普通的bean会首先提前进行三级缓存
+						 *所以这里会获取到还未初始化的bean，从而赋值到所依赖当前singletonObject对象的bean
+						 */
 						singletonObject = singletonFactory.getObject();
+						// 放入二级缓存中
 						this.earlySingletonObjects.put(beanName, singletonObject);
+						// 三级缓存中移除当前beanName的lambda表达式
 						this.singletonFactories.remove(beanName);
 					}
 				}
