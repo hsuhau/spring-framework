@@ -1511,6 +1511,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param bw the BeanWrapper wrapping the target object
 	 * @param pvs the new property values
 	 */
+	// PropertyValues接口的默认实现。允许对属性进行简单操作，并提供构造函数以支持从 Map 进行深度复制和构造。
 	protected void applyPropertyValues(String beanName, BeanDefinition mbd, BeanWrapper bw, PropertyValues pvs) {
 		if (pvs == null || pvs.isEmpty()) {
 			return;
