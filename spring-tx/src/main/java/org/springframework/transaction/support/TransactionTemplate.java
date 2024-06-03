@@ -123,30 +123,39 @@ public class TransactionTemplate extends DefaultTransactionDefinition
 
 	@Override
 	public <T> T execute(TransactionCallback<T> action) throws TransactionException {
+		// 事务管理是否是 xxx接口
 		if (this.transactionManager instanceof CallbackPreferringPlatformTransactionManager) {
+			// 强转执行
 			return ((CallbackPreferringPlatformTransactionManager) this.transactionManager).execute(this, action);
 		}
 		else {
+			// 获取事务状态
 			TransactionStatus status = this.transactionManager.getTransaction(this);
+			// 返回结果
 			T result;
 			try {
+				// 事务回调执行
 				result = action.doInTransaction(status);
 			}
 			catch (RuntimeException ex) {
 				// Transactional code threw application exception -> rollback
+				// 回滚异常
 				rollbackOnException(status, ex);
 				throw ex;
 			}
 			catch (Error err) {
 				// Transactional code threw error -> rollback
+				// 回滚异常
 				rollbackOnException(status, err);
 				throw err;
 			}
 			catch (Throwable ex) {
 				// Transactional code threw unexpected exception -> rollback
+				// 回滚异常
 				rollbackOnException(status, ex);
 				throw new UndeclaredThrowableException(ex, "TransactionCallback threw undeclared checked exception");
 			}
+			// 提交
 			this.transactionManager.commit(status);
 			return result;
 		}

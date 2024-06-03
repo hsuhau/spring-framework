@@ -87,6 +87,7 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 	 * @return a TransactionAttribute for this method, or {@code null} if the method
 	 * is not transactional
 	 */
+	// 获取事务属性
 	@Override
 	public TransactionAttribute getTransactionAttribute(Method method, Class<?> targetClass) {
 		if (method.getDeclaringClass() == Object.class) {
@@ -94,6 +95,7 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 		}
 
 		// First, see if we have a cached value.
+		// 尝试缓存中获取
 		Object cacheKey = getCacheKey(method, targetClass);
 		TransactionAttribute cached = this.attributeCache.get(cacheKey);
 		if (cached != null) {
@@ -108,6 +110,7 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 		}
 		else {
 			// We need to work it out.
+			// 自行构建一个事务属性
 			TransactionAttribute txAttr = computeTransactionAttribute(method, targetClass);
 			// Put it in the cache.
 			if (txAttr == null) {

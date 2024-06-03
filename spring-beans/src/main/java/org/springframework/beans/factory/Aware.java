@@ -32,6 +32,7 @@ package org.springframework.beans.factory;
  * @author Juergen Hoeller
  * @since 3.1
  */
+// todo 不理解
 public interface Aware {
 
 }

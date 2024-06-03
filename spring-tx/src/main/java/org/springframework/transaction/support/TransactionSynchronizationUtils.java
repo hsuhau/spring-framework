@@ -58,6 +58,7 @@ public abstract class TransactionSynchronizationUtils {
 	 * the given handle as-is.
 	 * @see org.springframework.core.InfrastructureProxy#getWrappedObject()
 	 */
+	// unwrapResourceIfNecessary 方法会将资源具体化到接口，从接口中调用方法获取具体的资源
 	static Object unwrapResourceIfNecessary(Object resource) {
 		Assert.notNull(resource, "Resource must not be null");
 		Object resourceRef = resource;

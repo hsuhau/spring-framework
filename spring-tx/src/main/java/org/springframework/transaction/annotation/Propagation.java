@@ -27,6 +27,7 @@ import org.springframework.transaction.TransactionDefinition;
  * @author Juergen Hoeller
  * @since 1.2
  */
+// 事务传播
 public enum Propagation {
 
 	/**
@@ -34,6 +35,7 @@ public enum Propagation {
 	 * Analogous to EJB transaction attribute of the same name.
 	 * <p>This is the default setting of a transaction annotation.
 	 */
+	// 有事务则加入，没有则新建
 	REQUIRED(TransactionDefinition.PROPAGATION_REQUIRED),
 
 	/**
@@ -47,12 +49,14 @@ public enum Propagation {
 	 * the actual synchronization configuration of the transaction manager.
 	 * @see org.springframework.transaction.support.AbstractPlatformTransactionManager#setTransactionSynchronization
 	 */
+	// 有事务就用，如果没有就不开启（继承关系）
 	SUPPORTS(TransactionDefinition.PROPAGATION_SUPPORTS),
 
 	/**
 	 * Support a current transaction, throw an exception if none exists.
 	 * Analogous to EJB transaction attribute of the same name.
 	 */
+	// 必须在已有事务中
 	MANDATORY(TransactionDefinition.PROPAGATION_MANDATORY),
 
 	/**
@@ -65,6 +69,7 @@ public enum Propagation {
 	 * made available to it (which is server-specific in standard Java EE).
 	 * @see org.springframework.transaction.jta.JtaTransactionManager#setTransactionManager
 	 */
+	// 不管有没有新事务，都要新建，老事务挂起
 	REQUIRES_NEW(TransactionDefinition.PROPAGATION_REQUIRES_NEW),
 
 	/**
@@ -77,12 +82,14 @@ public enum Propagation {
 	 * made available to it (which is server-specific in standard Java EE).
 	 * @see org.springframework.transaction.jta.JtaTransactionManager#setTransactionManager
 	 */
+	// 不开启事务
 	NOT_SUPPORTED(TransactionDefinition.PROPAGATION_NOT_SUPPORTED),
 
 	/**
 	 * Execute non-transactionally, throw an exception if a transaction exists.
 	 * Analogous to EJB transaction attribute of the same name.
 	 */
+	// 必须在没有事物的的方法中调用，否则抛异常
 	NEVER(TransactionDefinition.PROPAGATION_NEVER),
 
 	/**
@@ -94,6 +101,7 @@ public enum Propagation {
 	 * transactions as well.
 	 * @see org.springframework.jdbc.datasource.DataSourceTransactionManager
 	 */
+	// 如果已有事务，就嵌套执行，如果没有，就新建 (和REQUIRED类似，和REQUIRES_NEW容易混淆)
 	NESTED(TransactionDefinition.PROPAGATION_NESTED);
 
 
