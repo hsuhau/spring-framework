@@ -38,6 +38,7 @@ import org.springframework.web.servlet.ModelAndView;
  */
 public class SimpleControllerHandlerAdapter implements HandlerAdapter {
 
+	// 判断要执行的handler是不是controller类型的
 	@Override
 	public boolean supports(Object handler) {
 		return (handler instanceof Controller);

@@ -65,6 +65,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	 * the handler to be registered for the root path ("/").
 	 * <p>Default is {@code null}, indicating no root handler.
 	 */
+	// 为此 handler映射设置跟handler，即要为根路径("/") 注册的 handler
 	public void setRootHandler(Object rootHandler) {
 		this.rootHandler = rootHandler;
 	}
@@ -112,9 +113,12 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	 * @param request current HTTP request
 	 * @return the handler instance, or {@code null} if none found
 	 */
+	// 查找给定请求的URL路径 对应的handler
 	@Override
 	protected Object getHandlerInternal(HttpServletRequest request) throws Exception {
+		// 从request 中获取请求的URL路径
 		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
+		// 将得到的URL路径与handler进行匹配，得到相应的handler，如果没有对应的handler，则返回null，这样默认的handler会被使用
 		Object handler = lookupHandler(lookupPath, request);
 		if (handler == null) {
 			// We need to care for the default handler directly, since we need to
@@ -123,6 +127,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 			if ("/".equals(lookupPath)) {
 				rawHandler = getRootHandler();
 			}
+			// 使用默认的handler
 			if (rawHandler == null) {
 				rawHandler = getDefaultHandler();
 			}
@@ -158,8 +163,10 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	 * @see #exposePathWithinMapping
 	 * @see org.springframework.util.AntPathMatcher
 	 */
+	// 查找指定 URL路径 的 handler实例
 	protected Object lookupHandler(String urlPath, HttpServletRequest request) throws Exception {
 		// Direct match?
+		// 直接匹配
 		Object handler = this.handlerMap.get(urlPath);
 		if (handler != null) {
 			// Bean name or resolved handler?
@@ -172,6 +179,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 		}
 
 		// Pattern match?
+		// 正则匹配
 		List<String> matchingPatterns = new ArrayList<String>();
 		for (String registeredPattern : this.handlerMap.keySet()) {
 			if (getPathMatcher().match(registeredPattern, urlPath)) {
@@ -309,6 +317,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	 * @throws BeansException if the handler couldn't be registered
 	 * @throws IllegalStateException if there is a conflicting handler registered
 	 */
+	// 为给定的 url 路径数组 注册指定的 handler 处理程序
 	protected void registerHandler(String[] urlPaths, String beanName) throws BeansException, IllegalStateException {
 		Assert.notNull(urlPaths, "URL path array must not be null");
 		for (String urlPath : urlPaths) {
@@ -324,12 +333,14 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	 * @throws BeansException if the handler couldn't be registered
 	 * @throws IllegalStateException if there is a conflicting handler registered
 	 */
+	// 为给定的 url路径， 注册指定的handler处理程序
 	protected void registerHandler(String urlPath, Object handler) throws BeansException, IllegalStateException {
 		Assert.notNull(urlPath, "URL path must not be null");
 		Assert.notNull(handler, "Handler object must not be null");
 		Object resolvedHandler = handler;
 
 		// Eagerly resolve handler if referencing singleton via name.
+		// 如果使用 bean 名称进行映射，就直接从 IoC容器中获取该bean名称对应的 handler
 		if (!this.lazyInitHandlers && handler instanceof String) {
 			String handlerName = (String) handler;
 			if (getApplicationContext().isSingleton(handlerName)) {
@@ -346,18 +357,21 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 			}
 		}
 		else {
+			// 处理 URL 是 "/" 的映射，把这个"/" 映射的controller设置到rootHandler中
 			if (urlPath.equals("/")) {
 				if (logger.isInfoEnabled()) {
 					logger.info("Root mapping to " + getHandlerDescription(handler));
 				}
 				setRootHandler(resolvedHandler);
 			}
+			// 处理 URL 是 "/*" 的映射，把这个"/*" 映射的controller设置到defaultHandler中
 			else if (urlPath.equals("/*")) {
 				if (logger.isInfoEnabled()) {
 					logger.info("Default mapping to " + getHandlerDescription(handler));
 				}
 				setDefaultHandler(resolvedHandler);
 			}
+			// 处理正常的URL映射，此handlerMap的key和value，分别代表 URL和映射的controller
 			else {
 				this.handlerMap.put(urlPath, resolvedHandler);
 				if (logger.isInfoEnabled()) {

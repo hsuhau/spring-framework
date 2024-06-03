@@ -61,6 +61,10 @@ import org.springframework.web.context.request.WebRequest;
  * @see org.springframework.web.jsf.FacesContextUtils
  * @see org.springframework.web.jsf.el.SpringBeanFacesELResolver
  */
+/**
+ * 这是一个封装了很多静态方法的抽象工具类，所以只能调用其静态方法，
+ * 不能对其进行实例化
+ */
 public abstract class WebApplicationContextUtils {
 
 	private static final boolean jsfPresent =
@@ -94,6 +98,11 @@ public abstract class WebApplicationContextUtils {
 	 * @return the root WebApplicationContext for this web app, or {@code null} if none
 	 * @see org.springframework.web.context.WebApplicationContext#ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE
 	 */
+	/**
+	 * 使用了 WebApplicationContext 的 ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE属性，获取
+	 * ServletContext 中的根上下文，这个属性代表的根上下文在 ContextLoaderListener 初始化的
+	 * 过程中被建立
+	 */
 	public static WebApplicationContext getWebApplicationContext(ServletContext sc) {
 		return getWebApplicationContext(sc, WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE);
 	}
@@ -103,6 +112,9 @@ public abstract class WebApplicationContextUtils {
 	 * @param sc ServletContext to find the web application context for
 	 * @param attrName the name of the ServletContext attribute to look for
 	 * @return the desired WebApplicationContext for this web app, or {@code null} if none
+	 */
+	/**
+	 * 查找此 web应用程序 的自定义 WebApplicationContext
 	 */
 	public static WebApplicationContext getWebApplicationContext(ServletContext sc, String attrName) {
 		Assert.notNull(sc, "ServletContext must not be null");

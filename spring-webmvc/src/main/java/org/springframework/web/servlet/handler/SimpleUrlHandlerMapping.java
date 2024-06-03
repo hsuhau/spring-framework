@@ -52,6 +52,8 @@ import org.springframework.util.CollectionUtils;
  * @see #setUrlMap
  * @see BeanNameUrlHandlerMapping
  */
+// 以 SimpleUrlHandlerMapping 为例来分析 HandlerMapping 的设计与实现。在 SimpleUrlHandlerMapping 中，定义了一个 Map 来持有一系列的映射关系。通过这些在 HandlerMapping 中定义的映射关系，即这些 URL 请求 和控制器的对应关系，使 SpringMVC
+//应用 可以根据 HTTP 请求 确定一个对应的 Controller。具体来说，这些映射关系是通过 HandlerMapping 接口 来封装的，在 HandlerMapping 接口 中定义了一个 getHandler() 方法，通过这个方法，可以获得与 HTTP 请求 对应的 HandlerExecutionChain，在这个 HandlerExecutionChain 中，封装了具体的 Controller 对象。
 public class SimpleUrlHandlerMapping extends AbstractUrlHandlerMapping {
 
 	private final Map<String, Object> urlMap = new LinkedHashMap<String, Object>();
@@ -109,15 +111,18 @@ public class SimpleUrlHandlerMapping extends AbstractUrlHandlerMapping {
 	 * @throws BeansException if a handler couldn't be registered
 	 * @throws IllegalStateException if there is a conflicting handler registered
 	 */
+	// 为相应的路径注册URL映射中指定所有的handlers处理程序
 	protected void registerHandlers(Map<String, Object> urlMap) throws BeansException {
 		if (urlMap.isEmpty()) {
 			logger.warn("Neither 'urlMap' nor 'mappings' set on SimpleUrlHandlerMapping");
 		}
 		else {
+			// 这里对 bean的 配置进行解析，然后调用父类的 registerHandler方法，进行解析
 			for (Map.Entry<String, Object> entry : urlMap.entrySet()) {
 				String url = entry.getKey();
 				Object handler = entry.getValue();
 				// Prepend with slash if not already present.
+				// 如果 url 没有斜线， 就在前面加上斜线
 				if (!url.startsWith("/")) {
 					url = "/" + url;
 				}
@@ -125,6 +130,8 @@ public class SimpleUrlHandlerMapping extends AbstractUrlHandlerMapping {
 				if (handler instanceof String) {
 					handler = ((String) handler).trim();
 				}
+
+				// 这里调用的就是父类的方法
 				registerHandler(url, handler);
 			}
 		}

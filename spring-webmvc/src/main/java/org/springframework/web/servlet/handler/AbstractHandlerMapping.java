@@ -88,6 +88,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	 * This handler will be returned if no specific mapping was found.
 	 * <p>Default is {@code null}, indicating no default handler.
 	 */
+	// 设置 此handler映射的默认 handler。如果未找到特定映射，则返回此handler
 	public void setDefaultHandler(Object defaultHandler) {
 		this.defaultHandler = defaultHandler;
 	}
@@ -348,21 +349,28 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	 * @return the corresponding handler instance, or the default handler
 	 * @see #getHandlerInternal
 	 */
+	// 查找给定请求的handler，如果找不到特定的handler，则返回defaultHandler
 	@Override
 	public final HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
+		// 这里用到了模板方法模式，getHandler是一个模板方法，定义了流程， getHandlerInternal则是一个抽象方法，交由子类实现
 		Object handler = getHandlerInternal(request);
+		// 如果找不到特定的handler，则取defaultHandler
 		if (handler == null) {
 			handler = getDefaultHandler();
 		}
+		// defaultHander也没有，则返回null
 		if (handler == null) {
 			return null;
 		}
 		// Bean name or resolved handler?
+		// 如果 该handler是String类型，说明它是一个beanName
+		// 根据该beanName从IoC容器中 获取真正的 handler对象
 		if (handler instanceof String) {
 			String handlerName = (String) handler;
 			handler = getApplicationContext().getBean(handlerName);
 		}
 
+		// 这里把handler添加到HandlerExecutionChain中
 		HandlerExecutionChain executionChain = getHandlerExecutionChain(handler, request);
 		if (CorsUtils.isCorsRequest(request)) {
 			CorsConfiguration globalConfig = this.globalCorsConfigSource.getCorsConfiguration(request);

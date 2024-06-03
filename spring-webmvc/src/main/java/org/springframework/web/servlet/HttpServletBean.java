@@ -150,6 +150,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		}
 
 		// Set bean properties from init parameters.
+		// 获取 Servlet 的初始化参数，对 bean属性 进行配置
 		PropertyValues pvs = new ServletConfigPropertyValues(getServletConfig(), this.requiredProperties);
 		if (!pvs.isEmpty()) {
 			try {
@@ -168,6 +169,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		}
 
 		// Let subclasses do whatever initialization they like.
+		// 这个方法会调用子类的实现，进行具体的初始化
 		initServletBean();
 
 		if (logger.isDebugEnabled()) {

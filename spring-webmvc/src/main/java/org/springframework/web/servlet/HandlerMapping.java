@@ -133,6 +133,7 @@ public interface HandlerMapping {
 	 * any interceptors, or {@code null} if no mapping found
 	 * @throws Exception if there is an internal error
 	 */
+	// 返回的这个 HandlerExecutionChain 不但持有handler本身，还包括了处理这个 HTTP请求的拦截器链
 	HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception;
 
 }

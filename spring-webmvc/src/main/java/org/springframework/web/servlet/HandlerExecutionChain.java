@@ -35,6 +35,8 @@ import org.springframework.util.ObjectUtils;
  * @since 20.06.2003
  * @see HandlerInterceptor
  */
+
+// 这个 HandlerExecutionChain 的实现看起来比较简洁，它持有一个 拦截器链 (HandlerInterceptor 对象列表) 和一个 handler 对象，这个 handler 对象 实际上就是 HTTP 请求 对应的 Controller，在持有这个 handler 对象 的同时，还在 HandlerExecutionChain 中设置了一个拦截器链，通过这个拦截器链中的拦截器，可以为 handler 对象 提供功能的增强。要完成这些工作，需要对拦截器链和 handler 都进行配置，这些配置都是在 HandlerExecutionChain 的初始化函数中完成的。为了维护这个拦截器链和 handler，HandlerExecutionChain 还提供了一系列与拦截器链维护相关的操作，比如，为拦截器链增加拦截器的 addInterceptor() 方法。
 public class HandlerExecutionChain {
 
 	private static final Log logger = LogFactory.getLog(HandlerExecutionChain.class);
@@ -88,6 +90,7 @@ public class HandlerExecutionChain {
 	/**
 	 * Add the given interceptor to the end of this chain.
 	 */
+	// 为拦截器链 添加 拦截器
 	public void addInterceptor(HandlerInterceptor interceptor) {
 		initInterceptorList().add(interceptor);
 	}
@@ -95,12 +98,14 @@ public class HandlerExecutionChain {
 	/**
 	 * Add the given interceptors to the end of this chain.
 	 */
+	// 批量添加拦截器链
 	public void addInterceptors(HandlerInterceptor... interceptors) {
 		if (!ObjectUtils.isEmpty(interceptors)) {
 			CollectionUtils.mergeArrayIntoCollection(interceptors, initInterceptorList());
 		}
 	}
 
+	// 延迟初始化 interceptorList 和 interceptors 集合
 	private List<HandlerInterceptor> initInterceptorList() {
 		if (this.interceptorList == null) {
 			this.interceptorList = new ArrayList<HandlerInterceptor>();
