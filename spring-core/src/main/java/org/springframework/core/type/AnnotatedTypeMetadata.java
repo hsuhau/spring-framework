@@ -46,6 +46,7 @@ public interface AnnotatedTypeMetadata {
 	 * type to look for
 	 * @return whether a matching annotation is defined
 	 */
+	// 是否有注解
 	boolean isAnnotated(String annotationName);
 
 	/**
@@ -58,6 +59,7 @@ public interface AnnotatedTypeMetadata {
 	 * and the defined attribute value as Map value. This return value will be
 	 * {@code null} if no matching annotation is defined.
 	 */
+	// 获取注解的属性
 	Map<String, Object> getAnnotationAttributes(String annotationName);
 
 	/**

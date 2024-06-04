@@ -38,6 +38,7 @@ public interface AnnotationMetadata extends ClassMetadata, AnnotatedTypeMetadata
 	 * are <em>present</em> on the underlying class.
 	 * @return the annotation type names
 	 */
+	// 获取注解名称，全类名
 	Set<String> getAnnotationTypes();
 
 	/**
@@ -47,6 +48,7 @@ public interface AnnotationMetadata extends ClassMetadata, AnnotatedTypeMetadata
 	 * type to look for
 	 * @return the meta-annotation type names
 	 */
+	// 注解全类名
 	Set<String> getMetaAnnotationTypes(String annotationName);
 
 	/**
@@ -56,6 +58,7 @@ public interface AnnotationMetadata extends ClassMetadata, AnnotatedTypeMetadata
 	 * type to look for
 	 * @return {@code true} if a matching annotation is present
 	 */
+	// 是否包含某个注解
 	boolean hasAnnotation(String annotationName);
 
 	/**
@@ -65,6 +68,7 @@ public interface AnnotationMetadata extends ClassMetadata, AnnotatedTypeMetadata
 	 * meta-annotation type to look for
 	 * @return {@code true} if a matching meta-annotation is present
 	 */
+	// 是否包含元注解
 	boolean hasMetaAnnotation(String metaAnnotationName);
 
 	/**
@@ -73,6 +77,7 @@ public interface AnnotationMetadata extends ClassMetadata, AnnotatedTypeMetadata
 	 * @param annotationName the fully qualified class name of the annotation
 	 * type to look for
 	 */
+	//
 	boolean hasAnnotatedMethods(String annotationName);
 
 	/**

@@ -29,6 +29,7 @@ import org.springframework.core.io.Resource;
  * @see SimpleMetadataReaderFactory
  * @see CachingMetadataReaderFactory
  */
+// 用来创建MetadataReader
 public interface MetadataReaderFactory {
 
 	/**

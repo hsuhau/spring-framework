@@ -112,6 +112,7 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 		return getAnnotationAttributes(annotationName, false);
 	}
 
+	// 获取注解属性 map
 	@Override
 	public Map<String, Object> getAnnotationAttributes(String annotationName, boolean classValuesAsString) {
 		return (this.annotations.length > 0 ? AnnotatedElementUtils.getMergedAnnotationAttributes(

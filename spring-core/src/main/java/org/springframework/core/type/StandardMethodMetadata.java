@@ -34,6 +34,7 @@ import org.springframework.util.MultiValueMap;
  * @author Phillip Webb
  * @since 3.0
  */
+// 通过 java 反射获取方法的元信息
 public class StandardMethodMetadata implements MethodMetadata {
 
 	private final Method introspectedMethod;
