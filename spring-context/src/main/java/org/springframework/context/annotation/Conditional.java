@@ -65,6 +65,7 @@ public @interface Conditional {
 	 * All {@link Condition}s that must {@linkplain Condition#matches match}
 	 * in order for the component to be registered.
 	 */
+	// 多个匹配器接口
 	Class<? extends Condition>[] value();
 
 }

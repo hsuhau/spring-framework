@@ -84,9 +84,12 @@ class ConditionEvaluator {
 		}
 
 		List<Condition> conditions = new ArrayList<Condition>();
+		// 获取注解Conditional的属性值
 		for (String[] conditionClasses : getConditionClasses(metadata)) {
 			for (String conditionClass : conditionClasses) {
+				// 序列化成注解
 				Condition condition = getCondition(conditionClass, this.context.getClassLoader());
+				// 插入注解列表
 				conditions.add(condition);
 			}
 		}
@@ -98,6 +101,7 @@ class ConditionEvaluator {
 			if (condition instanceof ConfigurationCondition) {
 				requiredPhase = ((ConfigurationCondition) condition).getConfigurationPhase();
 			}
+			// matches 进行验证
 			if (requiredPhase == null || requiredPhase == phase) {
 				if (!condition.matches(this.context, metadata)) {
 					return true;
@@ -126,12 +130,16 @@ class ConditionEvaluator {
 	 */
 	private static class ConditionContextImpl implements ConditionContext {
 
+		// bean定义
 		private final BeanDefinitionRegistry registry;
 
+		// bean工厂
 		private final ConfigurableListableBeanFactory beanFactory;
 
+		// 环境
 		private final Environment environment;
 
+		// 资源加载器
 		private final ResourceLoader resourceLoader;
 
 		public ConditionContextImpl(BeanDefinitionRegistry registry, Environment environment, ResourceLoader resourceLoader) {

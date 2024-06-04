@@ -48,6 +48,7 @@ public interface Condition {
 	 * @return {@code true} if the condition matches and the component can be registered
 	 * or {@code false} to veto registration.
 	 */
+	// 是否匹配，是则进行初始化，否则跳过
 	boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata);
 
 }
