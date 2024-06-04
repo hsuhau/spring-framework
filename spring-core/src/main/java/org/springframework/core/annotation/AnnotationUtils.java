@@ -179,6 +179,7 @@ public abstract class AnnotationUtils {
 	 */
 	public static <A extends Annotation> A getAnnotation(AnnotatedElement annotatedElement, Class<A> annotationType) {
 		try {
+			// 获取注解
 			A annotation = annotatedElement.getAnnotation(annotationType);
 			if (annotation == null) {
 				for (Annotation metaAnn : annotatedElement.getAnnotations()) {
@@ -211,7 +212,9 @@ public abstract class AnnotationUtils {
 	 * @see #getAnnotation(AnnotatedElement, Class)
 	 */
 	public static <A extends Annotation> A getAnnotation(Method method, Class<A> annotationType) {
+		// 函数
 		Method resolvedMethod = BridgeMethodResolver.findBridgedMethod(method);
+		// 强制转换
 		return getAnnotation((AnnotatedElement) resolvedMethod, annotationType);
 	}
 
@@ -562,11 +565,16 @@ public abstract class AnnotationUtils {
 			return null;
 		}
 
+		// 创建注解缓存,key:被扫描的函数,value:注解
 		AnnotationCacheKey cacheKey = new AnnotationCacheKey(method, annotationType);
+
+		// 从findAnnotationCache获取缓存
 		A result = (A) findAnnotationCache.get(cacheKey);
 
 		if (result == null) {
 			Method resolvedMethod = BridgeMethodResolver.findBridgedMethod(method);
+
+			// 寻找注解
 			result = findAnnotation((AnnotatedElement) resolvedMethod, annotationType);
 			if (result == null) {
 				result = searchOnInterfaces(method, annotationType, method.getDeclaringClass().getInterfaces());
@@ -592,7 +600,9 @@ public abstract class AnnotationUtils {
 			}
 
 			if (result != null) {
+				// 处理注解
 				result = synthesizeAnnotation(result, method);
+				// 添加缓存
 				findAnnotationCache.put(cacheKey, result);
 			}
 		}
@@ -1433,6 +1443,7 @@ public abstract class AnnotationUtils {
 			return null;
 		}
 		try {
+			// 直接获取defaultValue
 			return annotationType.getDeclaredMethod(attributeName).getDefaultValue();
 		}
 		catch (Throwable ex) {
@@ -1480,6 +1491,7 @@ public abstract class AnnotationUtils {
 		return synthesizeAnnotation(annotation, (Object) annotatedElement);
 	}
 
+	// 注解是否存在别名,没有直接返回
 	@SuppressWarnings("unchecked")
 	static <A extends Annotation> A synthesizeAnnotation(A annotation, Object annotatedElement) {
 		if (annotation == null) {
@@ -1489,6 +1501,7 @@ public abstract class AnnotationUtils {
 			return annotation;
 		}
 
+		// 具体的注解
 		Class<? extends Annotation> annotationType = annotation.annotationType();
 		if (!isSynthesizable(annotationType)) {
 			return annotation;
@@ -1700,6 +1713,7 @@ public abstract class AnnotationUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	private static boolean isSynthesizable(Class<? extends Annotation> annotationType) {
+		// 从缓存中获取当前注解
 		Boolean synthesizable = synthesizableCache.get(annotationType);
 		if (synthesizable != null) {
 			return synthesizable;
@@ -1711,7 +1725,10 @@ public abstract class AnnotationUtils {
 				synthesizable = Boolean.TRUE;
 				break;
 			}
+			// 获取返回值类型
 			Class<?> returnType = attribute.getReturnType();
+
+			// 根据返回值类型做不同处理
 			if (Annotation[].class.isAssignableFrom(returnType)) {
 				Class<? extends Annotation> nestedAnnotationType =
 						(Class<? extends Annotation>) returnType.getComponentType();
@@ -1796,6 +1813,7 @@ public abstract class AnnotationUtils {
 		}
 
 		methods = new ArrayList<Method>();
+		// annotationType.getDeclaredMethods() 获取注解中的方法
 		for (Method method : annotationType.getDeclaredMethods()) {
 			if (isAttributeMethod(method)) {
 				ReflectionUtils.makeAccessible(method);
@@ -1803,7 +1821,9 @@ public abstract class AnnotationUtils {
 			}
 		}
 
+		// 缓存 key:注解,value:函数列表
 		attributeMethodsCache.put(annotationType, methods);
+		// 函数列表
 		return methods;
 	}
 

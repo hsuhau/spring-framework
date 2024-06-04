@@ -70,6 +70,7 @@ public @interface Order {
 	 * <p>Default is {@link Ordered#LOWEST_PRECEDENCE}.
 	 * @see Ordered#getOrder()
 	 */
+	// 启动顺序,默认integer最大值
 	int value() default Ordered.LOWEST_PRECEDENCE;
 
 }
