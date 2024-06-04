@@ -444,6 +444,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		execute(new ExecuteStatementCallback());
 	}
 
+	// 查询
 	@Override
 	public <T> T query(final String sql, final ResultSetExtractor<T> rse) throws DataAccessException {
 		Assert.notNull(sql, "SQL must not be null");
@@ -877,6 +878,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 			public Integer doInPreparedStatement(PreparedStatement ps) throws SQLException {
 				try {
 					if (pss != null) {
+						// 设置请求参数
 						pss.setValues(ps);
 					}
 					int rows = ps.executeUpdate();

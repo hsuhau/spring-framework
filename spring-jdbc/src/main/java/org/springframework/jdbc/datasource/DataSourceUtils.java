@@ -101,6 +101,7 @@ public abstract class DataSourceUtils {
 			conHolder.requested();
 			if (!conHolder.hasConnection()) {
 				logger.debug("Fetching resumed JDBC Connection from DataSource");
+				// 设置连接对象
 				conHolder.setConnection(dataSource.getConnection());
 			}
 			return conHolder.getConnection();
@@ -108,12 +109,15 @@ public abstract class DataSourceUtils {
 		// Else we either got no holder or an empty thread-bound holder here.
 
 		logger.debug("Fetching JDBC Connection from DataSource");
+		// 获取连接
 		Connection con = dataSource.getConnection();
 
+		// 当前线程支持同步
 		if (TransactionSynchronizationManager.isSynchronizationActive()) {
 			try {
 				// Use same Connection for further JDBC actions within the transaction.
 				// Thread-bound object will get removed by synchronization at transaction completion.
+				// 同一个事务中使用同一个连接对象
 				ConnectionHolder holderToUse = conHolder;
 				if (holderToUse == null) {
 					holderToUse = new ConnectionHolder(con);
@@ -121,6 +125,7 @@ public abstract class DataSourceUtils {
 				else {
 					holderToUse.setConnection(con);
 				}
+				// 记录连接数量
 				holderToUse.requested();
 				TransactionSynchronizationManager.registerSynchronization(
 						new ConnectionSynchronization(holderToUse, dataSource));
@@ -297,6 +302,7 @@ public abstract class DataSourceUtils {
 	 * (may be {@code null})
 	 * @see #getConnection
 	 */
+	// 释放资源
 	public static void releaseConnection(Connection con, DataSource dataSource) {
 		try {
 			doReleaseConnection(con, dataSource);
