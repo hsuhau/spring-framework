@@ -311,12 +311,13 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @return the number of bean definitions found
 	 * @throws BeanDefinitionStoreException in case of loading or parsing errors
 	 */
+	// 加载 XML 格式的 bean 定义
 	public int loadBeanDefinitions(EncodedResource encodedResource) throws BeanDefinitionStoreException {
 		Assert.notNull(encodedResource, "EncodedResource must not be null");
 		if (logger.isInfoEnabled()) {
 			logger.info("Loading XML bean definitions from " + encodedResource);
 		}
-		// 用一个 ThreadLocal 来存放配置文件资源
+		// 使用 ThreadLocal 存储当前正在加载的资源，以便检测循环依赖
 		Set<EncodedResource> currentResources = this.resourcesCurrentlyBeingLoaded.get();
 		if (currentResources == null) {
 			currentResources = new HashSet<EncodedResource>(4);
@@ -334,7 +335,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 					inputSource.setEncoding(encodedResource.getEncoding());
 				}
 
-				// 核心部分是这里，往下面看
+				// 核心部分：调用 doLoadBeanDefinitions 方法加载 bean 定义
 				return doLoadBeanDefinitions(inputSource, encodedResource.getResource());
 			}
 			finally {

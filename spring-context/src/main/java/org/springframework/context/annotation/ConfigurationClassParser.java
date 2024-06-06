@@ -159,7 +159,7 @@ class ConfigurationClassParser {
 		this.conditionEvaluator = new ConditionEvaluator(registry, environment, resourceLoader);
 	}
 
-
+	// 解析配置类
 	public void parse(Set<BeanDefinitionHolder> configCandidates) {
 		this.deferredImportSelectors = new LinkedList<DeferredImportSelectorHolder>();
 
@@ -216,6 +216,7 @@ class ConfigurationClassParser {
 	}
 
 
+	// 处理每个配置类并查找 @Bean 方法
 	protected void processConfigurationClass(ConfigurationClass configClass) throws IOException {
 		if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
 			return;
@@ -568,6 +569,7 @@ class ConfigurationClassParser {
 		}
 	}
 
+	// 处理import注解
 	private void processImports(ConfigurationClass configClass, SourceClass currentSourceClass,
 			Collection<SourceClass> importCandidates, boolean checkForCircularImports) {
 
@@ -582,19 +584,25 @@ class ConfigurationClassParser {
 			this.importStack.push(configClass);
 			try {
 				for (SourceClass candidate : importCandidates) {
+					// 如果是ImportSelector
 					if (candidate.isAssignable(ImportSelector.class)) {
 						// Candidate class is an ImportSelector -> delegate to it to determine imports
 						Class<?> candidateClass = candidate.loadClass();
+						// 实例化bean
 						ImportSelector selector = BeanUtils.instantiateClass(candidateClass, ImportSelector.class);
+						// 为实例化的 ImportSelector 对象设置相关的环境或资源
 						ParserStrategyUtils.invokeAwareMethods(
 								selector, this.environment, this.resourceLoader, this.registry);
+						// 延迟初始化
 						if (this.deferredImportSelectors != null && selector instanceof DeferredImportSelector) {
 							this.deferredImportSelectors.add(
 									new DeferredImportSelectorHolder(configClass, (DeferredImportSelector) selector));
 						}
 						else {
+							// 调用 ImportSelector 对象的 selectImports() 方法，获取要导入的配置类的信息。这个方法会根据一些条件动态地选择要导入的配置类，并返回配置类的全限定名数组。
 							String[] importClassNames = selector.selectImports(currentSourceClass.getMetadata());
 							Collection<SourceClass> importSourceClasses = asSourceClasses(importClassNames);
+							// 处理导入的配置类：根据 selectImports() 方法返回的配置类的全限定名数组，将其转换为 SourceClass 对象，并调用 processImports() 方法来处理导入的配置类。这个过程会递归地处理导入的配置类，完成配置类的加载和初始化。
 							processImports(configClass, currentSourceClass, importSourceClasses, false);
 						}
 					}

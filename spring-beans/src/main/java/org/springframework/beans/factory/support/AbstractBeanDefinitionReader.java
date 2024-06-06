@@ -210,21 +210,27 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 	 */
 	public int loadBeanDefinitions(String location, Set<Resource> actualResources) throws BeanDefinitionStoreException {
 		ResourceLoader resourceLoader = getResourceLoader();
+		// 检查是否存在 ResourceLoader，如果不存在则抛出异常
 		if (resourceLoader == null) {
 			throw new BeanDefinitionStoreException(
 					"Cannot import bean definitions from location [" + location + "]: no ResourceLoader available");
 		}
 
+		// 如果 ResourceLoader 是 ResourcePatternResolver 的实例，说明支持资源模式匹配
 		if (resourceLoader instanceof ResourcePatternResolver) {
 			// Resource pattern matching available.
+			// 尝试解析资源模式匹配
 			try {
 				Resource[] resources = ((ResourcePatternResolver) resourceLoader).getResources(location);
+				// 加载资源，并返回加载的数量
 				int loadCount = loadBeanDefinitions(resources);
+				// 将加载的资源添加到实际资源集合中
 				if (actualResources != null) {
 					for (Resource resource : resources) {
 						actualResources.add(resource);
 					}
 				}
+				// 记录日志
 				if (logger.isDebugEnabled()) {
 					logger.debug("Loaded " + loadCount + " bean definitions from location pattern [" + location + "]");
 				}
@@ -237,11 +243,15 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 		}
 		else {
 			// Can only load single resources by absolute URL.
+			// ResourceLoader 不支持资源模式匹配，只能加载单个资源
 			Resource resource = resourceLoader.getResource(location);
+			// 加载资源，并返回加载的数量
 			int loadCount = loadBeanDefinitions(resource);
+			// 将加载的资源添加到实际资源集合中
 			if (actualResources != null) {
 				actualResources.add(resource);
 			}
+			// 记录日志
 			if (logger.isDebugEnabled()) {
 				logger.debug("Loaded " + loadCount + " bean definitions from location [" + location + "]");
 			}

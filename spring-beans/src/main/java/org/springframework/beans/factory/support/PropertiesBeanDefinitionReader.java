@@ -345,20 +345,26 @@ public class PropertiesBeanDefinitionReader extends AbstractBeanDefinitionReader
 	public int registerBeanDefinitions(Map<?, ?> map, String prefix, String resourceDescription)
 			throws BeansException {
 
+		// 如果前缀为 null，则设置为空字符串
 		if (prefix == null) {
 			prefix = "";
 		}
 		int beanCount = 0;
 
+		// 遍历 map 中的每一个键
 		for (Object key : map.keySet()) {
+			// 检查键是否是 String 类型，如果不是则抛出异常
 			if (!(key instanceof String)) {
 				throw new IllegalArgumentException("Illegal key [" + key + "]: only Strings allowed");
 			}
 			String keyString = (String) key;
+			// 检查键是否以指定的前缀开头
 			if (keyString.startsWith(prefix)) {
 				// Key is of form: prefix<name>.property
+				// 键的形式为 prefix<name>.property
 				String nameAndProperty = keyString.substring(prefix.length());
 				// Find dot before property name, ignoring dots in property keys.
+				// 查找属性名称前的点，忽略属性键中的点。
 				int sepIdx = -1;
 				int propKeyIdx = nameAndProperty.indexOf(PropertyAccessor.PROPERTY_KEY_PREFIX);
 				if (propKeyIdx != -1) {
@@ -367,11 +373,13 @@ public class PropertiesBeanDefinitionReader extends AbstractBeanDefinitionReader
 				else {
 					sepIdx = nameAndProperty.lastIndexOf(SEPARATOR);
 				}
+				// 如果找到了点，则将其作为 bean 的名称
 				if (sepIdx != -1) {
 					String beanName = nameAndProperty.substring(0, sepIdx);
 					if (logger.isDebugEnabled()) {
 						logger.debug("Found bean name '" + beanName + "'");
 					}
+					// 如果注册表中尚未注册该 bean，则注册它
 					if (!getRegistry().containsBeanDefinition(beanName)) {
 						// If we haven't already registered it...
 						registerBeanDefinition(beanName, map, prefix + beanName, resourceDescription);
@@ -381,6 +389,7 @@ public class PropertiesBeanDefinitionReader extends AbstractBeanDefinitionReader
 				else {
 					// Ignore it: It wasn't a valid bean name and property,
 					// although it did start with the required prefix.
+					// 如果找不到点，则忽略该键
 					if (logger.isDebugEnabled()) {
 						logger.debug("Invalid bean name and property [" + nameAndProperty + "]");
 					}
