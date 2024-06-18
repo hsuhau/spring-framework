@@ -1080,20 +1080,31 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	public Object resolveDependency(DependencyDescriptor descriptor, String requestingBeanName,
 			Set<String> autowiredBeanNames, TypeConverter typeConverter) throws BeansException {
 
+		// <1> 设置参数名称探测器，例如通过它获取方法参数的名称
 		descriptor.initParameterNameDiscovery(getParameterNameDiscoverer());
+		// <1> 设置参数名称探测器，例如通过它获取方法参数的名称
 		if (javaUtilOptionalClass == descriptor.getDependencyType()) {
+			// 调用 `createOptionalDependency(...)` 方法，先将 `descriptor` 注入表述器封装成 NestedDependencyDescriptor 对象
+			// 底层处理和下面的 `5.2` 相同
 			return new OptionalDependencyFactory().createOptionalDependency(descriptor, requestingBeanName);
 		}
+		// <3> 否则，如果依赖类型为 ObjectFactory 或 ObjectProvider 类型
 		else if (ObjectFactory.class == descriptor.getDependencyType() ||
 				ObjectProvider.class == descriptor.getDependencyType()) {
+			// 返回一个 DependencyObjectProvider 私有内部类对象，并没有获取到实例的 Bean，需要调用其 getObject() 方法获取目标对象
 			return new DependencyObjectProvider(descriptor, requestingBeanName);
 		}
+		// <4> 否则，如果依赖类型为 javax.inject.Provider 类型
 		else if (javaxInjectProviderClass == descriptor.getDependencyType()) {
+			// 返回一个 Jsr330Provider 私有内部类对象，该对象也继承 DependencyObjectProvider
 			return new Jsr330ProviderFactory().createDependencyProvider(descriptor, requestingBeanName);
 		}
+		// <5> 否则，通用的处理逻辑
 		else {
+			// <5.1> 先通过 AutowireCandidateResolver 尝试获取一个代理对象，延迟依赖注入则会返回一个代理对象
 			Object result = getAutowireCandidateResolver().getLazyResolutionProxyIfNecessary(
 					descriptor, requestingBeanName);
+			// <5.2> 如果上面没有返回代理对象，则进行处理，调用 `doResolveDependency(...)` 方法
 			if (result == null) {
 				result = doResolveDependency(descriptor, requestingBeanName, autowiredBeanNames, typeConverter);
 			}
@@ -1101,11 +1112,25 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 	}
 
+	// 解析依赖，根据 @Autowired 注解的配置，找到合适的 Bean 进行注入
+	/**
+	 * 解析依赖关系，尝试为给定的依赖描述符找到匹配的 bean 实例。
+	 *
+	 * @param descriptor 依赖描述符
+	 * @param beanName 当前 bean 的名称
+	 * @param autowiredBeanNames 已自动装配的 bean 的名称集合
+	 * @param typeConverter 类型转换器
+	 * @return 匹配的 bean 实例，如果未找到匹配的实例则返回 null
+	 * @throws BeansException 如果解析依赖失败
+	 */
 	public Object doResolveDependency(DependencyDescriptor descriptor, String beanName,
 			Set<String> autowiredBeanNames, TypeConverter typeConverter) throws BeansException {
 
+		// 设置当前线程的注入点，并返回上次的注入点，属于嵌套注入的一个保护点
 		InjectionPoint previousInjectionPoint = ConstructorResolver.setCurrentInjectionPoint(descriptor);
 		try {
+			// <1> 针对给定的工厂给定一个快捷实现的方式，暂时忽略
+			// 例如考虑一些预先解析的信息，在进入所有Bean的常规类型匹配算法之前， 解析算法将首先尝试通过此方法
 			Object shortcut = descriptor.resolveShortcut(this);
 			if (shortcut != null) {
 				return shortcut;

@@ -681,6 +681,7 @@ public abstract class ReflectionUtils {
 	 */
 	public static void doWithFields(Class<?> clazz, FieldCallback fc, FieldFilter ff) {
 		// Keep backing up the inheritance hierarchy.
+		// 初始化目标类为传入的类
 		Class<?> targetClass = clazz;
 		do {
 			Field[] fields = getDeclaredFields(targetClass);
@@ -689,12 +690,15 @@ public abstract class ReflectionUtils {
 					continue;
 				}
 				try {
+					// 对每个符合条件的字段，调用字段回调接口的doWith方法
 					fc.doWith(field);
 				}
+				// 捕获并处理IllegalAccessException异常
 				catch (IllegalAccessException ex) {
 					throw new IllegalStateException("Not allowed to access field '" + field.getName() + "': " + ex);
 				}
 			}
+			// 移动到父类，继续遍历
 			targetClass = targetClass.getSuperclass();
 		}
 		while (targetClass != null && targetClass != Object.class);

@@ -920,6 +920,19 @@ public class AnnotatedElementUtils {
 	 * @param metaDepth the meta-depth of the annotation
 	 * @return the result of the processor (potentially {@code null})
 	 */
+	/**
+	 * 在给定的 {@link AnnotatedElement} 上搜索具有指定语义的注解，支持从类及其父类中查找。
+	 *
+	 * @param element 要搜索注解的 {@link AnnotatedElement}
+	 * @param annotationType 要搜索的注解类型
+	 * @param annotationName 要搜索的注解名称
+	 * @param containerType 包含注解的容器类型
+	 * @param processor 处理器接口，用于处理找到的注解
+	 * @param visited 已访问的元素集合，用于避免循环依赖
+	 * @param metaDepth 注解元数据的深度
+	 * @param <T> 返回的结果类型
+	 * @return 如果找到了具有指定语义的注解，则返回处理器处理后的结果；否则返回 null
+	 */
 	private static <T> T searchWithGetSemantics(AnnotatedElement element,
 			Class<? extends Annotation> annotationType, String annotationName,
 			Class<? extends Annotation> containerType, Processor<T> processor,
@@ -927,9 +940,11 @@ public class AnnotatedElementUtils {
 
 		Assert.notNull(element, "AnnotatedElement must not be null");
 
+		// 如果元素尚未访问过，则执行搜索
 		if (visited.add(element)) {
 			try {
 				// Start searching within locally declared annotations
+				// 在本地声明的注解中开始搜索
 				List<Annotation> declaredAnnotations = Arrays.asList(element.getDeclaredAnnotations());
 				T result = searchWithGetSemanticsInAnnotations(element, declaredAnnotations,
 						annotationType, annotationName, containerType, processor, visited, metaDepth);
@@ -937,6 +952,7 @@ public class AnnotatedElementUtils {
 					return result;
 				}
 
+				// 如果元素为类，则继续搜索其继承的注解
 				if (element instanceof Class) {  // otherwise getAnnotations does not return anything new
 					List<Annotation> inheritedAnnotations = new ArrayList<Annotation>();
 					for (Annotation annotation : element.getAnnotations()) {
@@ -946,6 +962,7 @@ public class AnnotatedElementUtils {
 					}
 
 					// Continue searching within inherited annotations
+					// 在继承的注解中继续搜索
 					result = searchWithGetSemanticsInAnnotations(element, inheritedAnnotations,
 							annotationType, annotationName, containerType, processor, visited, metaDepth);
 					if (result != null) {

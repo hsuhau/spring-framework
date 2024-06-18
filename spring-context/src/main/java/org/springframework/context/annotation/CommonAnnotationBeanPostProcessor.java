@@ -309,6 +309,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		return true;
 	}
 
+	// 处理@Resource注解，进行依赖注入
 	@Override
 	public PropertyValues postProcessPropertyValues(
 			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) throws BeansException {
@@ -350,7 +351,9 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		return metadata;
 	}
 
+	// 构建资源注入元数据
 	private InjectionMetadata buildResourceMetadata(final Class<?> clazz) {
+		// 定义要注入的元素
 		LinkedList<InjectionMetadata.InjectedElement> elements = new LinkedList<InjectionMetadata.InjectedElement>();
 		Class<?> targetClass = clazz;
 
@@ -358,6 +361,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			final LinkedList<InjectionMetadata.InjectedElement> currElements =
 					new LinkedList<InjectionMetadata.InjectedElement>();
 
+			// 获取所有声明的字段
 			ReflectionUtils.doWithLocalFields(targetClass, new ReflectionUtils.FieldCallback() {
 				@Override
 				public void doWith(Field field) throws IllegalArgumentException, IllegalAccessException {
@@ -384,6 +388,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 				}
 			});
 
+			// 获取所有声明的方法
 			ReflectionUtils.doWithLocalMethods(targetClass, new ReflectionUtils.MethodCallback() {
 				@Override
 				public void doWith(Method method) throws IllegalArgumentException, IllegalAccessException {
@@ -447,31 +452,56 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * @see #getResource
 	 * @see Lazy
 	 */
+	/**
+	 * 构建一个懒加载的资源代理对象。
+	 *
+	 * @param element 包含资源查找信息的 LookupElement 对象。
+	 * @param requestingBeanName 请求资源的 Bean 名称。
+	 * @return 懒加载的资源代理对象。
+	 */
 	protected Object buildLazyResourceProxy(final LookupElement element, final String requestingBeanName) {
+		// 定义一个 TargetSource 实例，用于懒加载目标对象
 		TargetSource ts = new TargetSource() {
 			@Override
 			public Class<?> getTargetClass() {
+				// 返回要代理的资源类型
 				return element.lookupType;
 			}
 			@Override
 			public boolean isStatic() {
+				// 该资源不是静态的，每次访问时都会重新获取
 				return false;
 			}
 			@Override
 			public Object getTarget() {
+				// 实际获取并返回资源对象
+				// 这里实现懒加载，只有在第一次访问时才会实际获取资源
 				return getResource(element, requestingBeanName);
 			}
 			@Override
 			public void releaseTarget(Object target) {
+				// 释放资源对象，当前实现为空
+				// 可以在此方法中实现资源的清理或释放逻辑
 			}
 		};
+
+		// 创建一个 ProxyFactory 实例，用于创建代理对象
 		ProxyFactory pf = new ProxyFactory();
+
+		// 设置 TargetSource，以便代理对象能够动态获取目标资源
 		pf.setTargetSource(ts);
+
+		// 如果资源类型是接口，则将其添加到代理接口中
 		if (element.lookupType.isInterface()) {
 			pf.addInterface(element.lookupType);
 		}
+
+		// 获取类加载器
+		// 如果 beanFactory 是 ConfigurableBeanFactory 的实例，则获取其类加载器
 		ClassLoader classLoader = (this.beanFactory instanceof ConfigurableBeanFactory ?
 				((ConfigurableBeanFactory) this.beanFactory).getBeanClassLoader() : null);
+
+		// 返回代理对象，该代理对象会在需要时延迟加载实际资源
 		return pf.getProxy(classLoader);
 	}
 
@@ -483,16 +513,20 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * @throws BeansException if we failed to obtain the target resource
 	 */
 	protected Object getResource(LookupElement element, String requestingBeanName) throws BeansException {
+		// 如果指定了 mappedName，则通过 JNDI 工厂获取资源
 		if (StringUtils.hasLength(element.mappedName)) {
 			return this.jndiFactory.getBean(element.mappedName, element.lookupType);
 		}
+		// 如果总是使用 JNDI 查找，则通过 JNDI 工厂获取资源
 		if (this.alwaysUseJndiLookup) {
 			return this.jndiFactory.getBean(element.name, element.lookupType);
 		}
+		// 如果没有配置资源工厂，则抛出异常
 		if (this.resourceFactory == null) {
 			throw new NoSuchBeanDefinitionException(element.lookupType,
 					"No resource factory configured - specify the 'resourceFactory' property");
 		}
+		// 通过资源工厂自动装配资源
 		return autowireResource(this.resourceFactory, element, requestingBeanName);
 	}
 
@@ -512,21 +546,27 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		Set<String> autowiredBeanNames;
 		String name = element.name;
 
+		// 如果允许回退到默认类型匹配，并且资源名称是默认名称，并且工厂支持自动装配，并且不存在该名称的Bean，则尝试解析依赖
 		if (this.fallbackToDefaultTypeMatch && element.isDefaultName &&
 				factory instanceof AutowireCapableBeanFactory && !factory.containsBean(name)) {
 			autowiredBeanNames = new LinkedHashSet<String>();
+			// 解析依赖，使用指定的依赖描述符和请求资源的Bean名称
 			resource = ((AutowireCapableBeanFactory) factory).resolveDependency(
 					element.getDependencyDescriptor(), requestingBeanName, autowiredBeanNames, null);
 		}
 		else {
+			// 否则，直接通过工厂获取指定名称和类型的Bean
 			resource = factory.getBean(name, element.lookupType);
 			autowiredBeanNames = Collections.singleton(name);
 		}
 
+		// 如果工厂是ConfigurableBeanFactory类型，注册依赖关系
 		if (factory instanceof ConfigurableBeanFactory) {
 			ConfigurableBeanFactory beanFactory = (ConfigurableBeanFactory) factory;
+			// 遍历自动装配的Bean名称集合
 			for (String autowiredBeanName : autowiredBeanNames) {
 				if (beanFactory.containsBean(autowiredBeanName)) {
+					// 将请求的Bean注册为依赖于自动装配的Bean
 					beanFactory.registerDependentBean(autowiredBeanName, requestingBeanName);
 				}
 			}
@@ -592,31 +632,51 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 
 		public ResourceElement(Member member, AnnotatedElement ae, PropertyDescriptor pd) {
 			super(member, pd);
+			// 从带注释的元素中获取 @Resource 注释
 			Resource resource = ae.getAnnotation(Resource.class);
+			// 从注释中提取资源名称
 			String resourceName = resource.name();
+			// 从注释中提取资源类型
 			Class<?> resourceType = resource.type();
+
+			// 判断是否使用默认名称
 			this.isDefaultName = !StringUtils.hasLength(resourceName);
 			if (this.isDefaultName) {
+				// 如果使用默认名称，则从成员的名称推导资源名称
 				resourceName = this.member.getName();
+
+				// 特殊处理以 'set' 开头的方法
 				if (this.member instanceof Method && resourceName.startsWith("set") && resourceName.length() > 3) {
 					resourceName = Introspector.decapitalize(resourceName.substring(3));
 				}
 			}
 			else if (embeddedValueResolver != null) {
+				// 解析资源名称中的嵌入值
 				resourceName = embeddedValueResolver.resolveStringValue(resourceName);
 			}
+
+			// 检查是否提供了特定的资源类型，否则从字段/方法确定类型
 			if (resourceType != null && Object.class != resourceType) {
 				checkResourceType(resourceType);
 			}
 			else {
 				// No resource type specified... check field/method.
+				// 未指定资源类型，从成员类型中确定
 				resourceType = getResourceType();
 			}
+
+			// 将解析后的资源名称和类型赋给实例变量
 			this.name = resourceName;
 			this.lookupType = resourceType;
+
+			// 从注释的 lookup 属性中确定查找值（如果有）
 			String lookupValue = (lookupAttribute != null ?
 					(String) ReflectionUtils.invokeMethod(lookupAttribute, resource) : null);
+
+			// 从查找值或注释中确定映射名称
 			this.mappedName = (StringUtils.hasLength(lookupValue) ? lookupValue : resource.mappedName());
+
+			// 从 @Lazy 注释中确定是否启用懒加载
 			Lazy lazy = ae.getAnnotation(Lazy.class);
 			this.lazyLookup = (lazy != null && lazy.value());
 		}

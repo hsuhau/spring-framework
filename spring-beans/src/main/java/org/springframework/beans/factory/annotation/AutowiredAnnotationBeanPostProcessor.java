@@ -108,7 +108,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Juergen Hoeller
  * @author Mark Fisher
- * @author Stephane Nicoll
+ * @author Stephane NicollAutowireCandidateResolver
  * @since 2.5
  * @see #setAutowiredAnnotationType
  * @see Autowired
@@ -227,7 +227,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 		this.beanFactory = (ConfigurableListableBeanFactory) beanFactory;
 	}
 
-
+	//
 	@Override
 	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
 		if (beanType != null) {
@@ -357,12 +357,14 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 		return (candidateConstructors.length > 0 ? candidateConstructors : null);
 	}
 
+	// 处理对象的属性，包括通过 @Autowired 注解自动装配属性，以及处理 @Value 注解的属性赋值
 	@Override
 	public PropertyValues postProcessPropertyValues(
 			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) throws BeanCreationException {
-
+		// 找到这个 Bean 的注入元信息对象
 		InjectionMetadata metadata = findAutowiringMetadata(beanName, bean.getClass(), pvs);
 		try {
+			// 进行注入
 			metadata.inject(bean, beanName, pvs);
 		}
 		catch (BeanCreationException ex) {
@@ -398,9 +400,12 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 
 	private InjectionMetadata findAutowiringMetadata(String beanName, Class<?> clazz, PropertyValues pvs) {
 		// Fall back to class name as cache key, for backwards compatibility with custom callers.
+		// 1. Cache Key 生成： 根据 bean 名称或类名生成缓存键，以便在缓存中存储或检索自动装配的元数据。如果提供了 bean 名称，则使用 bean 名称作为缓存键；否则，使用类名作为缓存键，以确保与之前版本的调用兼容。
 		String cacheKey = (StringUtils.hasLength(beanName) ? beanName : clazz.getName());
 		// Quick check on the concurrent map first, with minimal locking.
+		// 2. 从缓存中获取元数据： 在 injectionMetadataCache 中查找缓存的自动装配元数据。这里使用了一个并发映射，以便快速地根据缓存键检索元数据，避免了不必要的锁定操作。
 		InjectionMetadata metadata = this.injectionMetadataCache.get(cacheKey);
+		// 3. 判断是否需要刷新元数据： 调用 InjectionMetadata.needsRefresh(metadata, clazz) 方法，判断当前缓存的元数据是否需要刷新。如果需要刷新，表示该类的结构发生了变化，可能需要重新解析注解并构建新的元数据对象。
 		if (InjectionMetadata.needsRefresh(metadata, clazz)) {
 			synchronized (this.injectionMetadataCache) {
 				metadata = this.injectionMetadataCache.get(cacheKey);
@@ -409,9 +414,11 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 						metadata.clear(pvs);
 					}
 					try {
+						// 4. 构建自动装配元数据： 如果需要刷新元数据，进入同步块，在同步块内部再次检查元数据是否需要刷新。如果需要刷新，则调用 buildAutowiringMetadata(clazz) 方法构建新的自动装配元数据，并将其存储到缓存中。
 						metadata = buildAutowiringMetadata(clazz);
 						this.injectionMetadataCache.put(cacheKey, metadata);
 					}
+					// 5. 处理异常情况： 如果构建自动装配元数据过程中发生了 NoClassDefFoundError 异常，抛出 IllegalStateException，指示无法完成自动装配元数据的构建，因为找不到依赖的类。
 					catch (NoClassDefFoundError err) {
 						throw new IllegalStateException("Failed to introspect bean class [" + clazz.getName() +
 								"] for autowiring metadata: could not find class that it depends on", err);
@@ -422,64 +429,91 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 		return metadata;
 	}
 
+	/**
+	 * 构建指定类的自动装配元数据，包括字段和方法上带有 @Autowired 注解的成员。
+	 *
+	 * @param clazz 要构建自动装配元数据的类
+	 * @return 构建的自动装配元数据对象
+	 */
 	private InjectionMetadata buildAutowiringMetadata(final Class<?> clazz) {
+		// <1> 创建 `currElements` 集合，用于保存 @Autowired、@Value 注解标注的字段
 		LinkedList<InjectionMetadata.InjectedElement> elements = new LinkedList<InjectionMetadata.InjectedElement>();
 		Class<?> targetClass = clazz;
 
+		// <2> 遍历这个 Class 对象的所有字段
 		do {
+			// 存储当前类的自动装配元数据的链表
 			final LinkedList<InjectionMetadata.InjectedElement> currElements =
 					new LinkedList<InjectionMetadata.InjectedElement>();
 
+			// 处理字段上的 @Autowired 注解
 			ReflectionUtils.doWithLocalFields(targetClass, new ReflectionUtils.FieldCallback() {
 				@Override
 				public void doWith(Field field) throws IllegalArgumentException, IllegalAccessException {
+					// <2.1> 找到该字段的 @Autowired 或者 @Value 注解，返回 `ann` 对象，没有的话返回空对象，则直接跳过不进行下面的操作
 					AnnotationAttributes ann = findAutowiredAnnotation(field);
 					if (ann != null) {
+						// <2.2> 进行过滤，static 修饰的字段不进行注入
 						if (Modifier.isStatic(field.getModifiers())) {
 							if (logger.isWarnEnabled()) {
 								logger.warn("Autowired annotation is not supported on static fields: " + field);
 							}
 							return;
 						}
+						// <2.3> 获取注解中的 `required` 配置
 						boolean required = determineRequiredStatus(ann);
+						// <2.4> 根据该字段和 `required` 构建一个 AutowiredFieldElement 对象，添加至 `currElements`
 						currElements.add(new AutowiredFieldElement(field, required));
 					}
 				}
 			});
 
+			// <3> 遍历这个 Class 对象的所有方法
 			ReflectionUtils.doWithLocalMethods(targetClass, new ReflectionUtils.MethodCallback() {
 				@Override
 				public void doWith(Method method) throws IllegalArgumentException, IllegalAccessException {
+					// <3.1> 尝试找到这个方法的桥接方法，没有的话就是本身这个方法
 					Method bridgedMethod = BridgeMethodResolver.findBridgedMethod(method);
+					// <3.2> 如果是桥接方法则直接跳过
 					if (!BridgeMethodResolver.isVisibilityBridgeMethodPair(method, bridgedMethod)) {
 						return;
 					}
+					// <3.3> 找到该方法的 @Autowired 或者 @Value 注解，返回 `ann` 对象，没有的话返回空对象，则直接跳过不进行下面的操作
 					AnnotationAttributes ann = findAutowiredAnnotation(bridgedMethod);
+					// 如果找到 @Autowired 注解，并且方法为目标类的最具体方法
 					if (ann != null && method.equals(ClassUtils.getMostSpecificMethod(method, clazz))) {
+						// <3.4> 进行过滤，static 修饰的方法不进行注入
 						if (Modifier.isStatic(method.getModifiers())) {
 							if (logger.isWarnEnabled()) {
 								logger.warn("Autowired annotation is not supported on static methods: " + method);
 							}
 							return;
 						}
+
 						if (method.getParameterTypes().length == 0) {
 							if (logger.isWarnEnabled()) {
 								logger.warn("Autowired annotation should only be used on methods with parameters: " +
 										method);
 							}
 						}
+						// <3.5> 获取注解中的 `required` 配置
 						boolean required = determineRequiredStatus(ann);
+						// 查找方法对应的属性描述符
 						PropertyDescriptor pd = BeanUtils.findPropertyForMethod(bridgedMethod, clazz);
+						// <3.6> 构建一个 AutowiredMethodElement 对象，添加至 `currElements`
 						currElements.add(new AutowiredMethodElement(method, required, pd));
 					}
 				}
 			});
 
+			// 将当前类的自动装配元数据链表加入总的自动装配元数据链表中
 			elements.addAll(0, currElements);
+			// <4> 找到父类，循环遍历
 			targetClass = targetClass.getSuperclass();
 		}
 		while (targetClass != null && targetClass != Object.class);
 
+		// <5> 根据从这个 Bean 解析出来的所有 InjectedElement 对象生成一个 InjectionMetadata 注入元信息对象，并返回
 		return new InjectionMetadata(clazz, elements);
 	}
 
@@ -558,10 +592,13 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	 */
 	private class AutowiredFieldElement extends InjectionMetadata.InjectedElement {
 
+		// 是否必须
 		private final boolean required;
 
+		// 是否缓存起来
 		private volatile boolean cached = false;
 
+		// 缓存对象
 		private volatile Object cachedFieldValue;
 
 		public AutowiredFieldElement(Field field, boolean required) {
@@ -571,22 +608,31 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 
 		@Override
 		protected void inject(Object bean, String beanName, PropertyValues pvs) throws Throwable {
+			// <1> 获取 `field` 字段
 			Field field = (Field) this.member;
 			Object value;
+			// <2> 如果进行缓存了，则尝试从缓存中获取
 			if (this.cached) {
 				value = resolvedCachedArgument(beanName, this.cachedFieldValue);
 			}
+			// <3> 否则，开始进行解析
 			else {
+				// <3.1> 创建一个依赖注入描述器 `desc`
 				DependencyDescriptor desc = new DependencyDescriptor(field, this.required);
 				desc.setContainingClass(bean.getClass());
 				Set<String> autowiredBeanNames = new LinkedHashSet<String>(1);
 				TypeConverter typeConverter = beanFactory.getTypeConverter();
 				try {
+					/**
+					 * <3.2> 通过 {@link org.springframework.beans.factory.support.DefaultListableBeanFactory#resolveDependency} 方法
+					 * 找到这个字段对应的 Bean（们）
+					 */
 					value = beanFactory.resolveDependency(desc, beanName, autowiredBeanNames, typeConverter);
 				}
 				catch (BeansException ex) {
 					throw new UnsatisfiedDependencyException(null, beanName, new InjectionPoint(field), ex);
 				}
+				// <3.3> 和缓存相关，如果有必要则将本次找到的注入对象缓存起来，避免下次再进行解析
 				synchronized (this) {
 					if (!this.cached) {
 						if (value != null || this.required) {
@@ -608,6 +654,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 					}
 				}
 			}
+			// <4> 如果获取到该字段对应的对象，则进行属性赋值（依赖注入）
 			if (value != null) {
 				ReflectionUtils.makeAccessible(field);
 				field.set(bean, value);

@@ -39,6 +39,8 @@ import org.springframework.beans.BeansException;
  * @see ConfigurableBeanFactory#addBeanPostProcessor
  * @see BeanFactoryPostProcessor
  */
+
+// BeanPostProcessor 接口定义了在 Spring 容器实例化 Bean 的过程中，允许开发者插入自己的逻辑的扩展点
 public interface BeanPostProcessor {
 
 	/**

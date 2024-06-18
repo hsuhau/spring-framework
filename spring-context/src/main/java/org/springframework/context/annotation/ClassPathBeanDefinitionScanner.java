@@ -245,15 +245,20 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * @return number of beans registered
 	 */
 	public int scan(String... basePackages) {
+		// <1> 获取扫描前的 BeanDefinition 数量
 		int beanCountAtScanStart = this.registry.getBeanDefinitionCount();
 
+		// <2> 进行扫描，将过滤出来的所有的 .class 文件生成对应的 BeanDefinition 并注册
 		doScan(basePackages);
 
 		// Register annotation config processors, if necessary.
+		// <3> 如果 `includeAnnotationConfig` 为 `true`（默认），则注册几个关于注解的 PostProcessor 处理器（关键）
+		// 在其他地方也会注册，内部会进行判断，已注册的处理器不会再注册
 		if (this.includeAnnotationConfig) {
 			AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry);
 		}
 
+		// <4> 返回本次扫描注册的 BeanDefinition 数量
 		return (this.registry.getBeanDefinitionCount() - beanCountAtScanStart);
 	}
 

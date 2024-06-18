@@ -112,6 +112,7 @@ import org.springframework.core.ResolvableType;
  * @see DisposableBean#destroy
  * @see org.springframework.beans.factory.support.RootBeanDefinition#getDestroyMethodName
  */
+// https://www.cnblogs.com/lifullmoon/p/14453011.html
 public interface BeanFactory {
 
 	/**
