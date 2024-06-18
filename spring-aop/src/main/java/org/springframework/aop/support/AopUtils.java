@@ -324,12 +324,14 @@ public abstract class AopUtils {
 	 * @throws Throwable if thrown by the target method
 	 * @throws org.springframework.aop.AopInvocationException in case of a reflection error
 	 */
+	// 无代理逻辑，直接执行被代理的方法
 	public static Object invokeJoinpointUsingReflection(Object target, Method method, Object[] args)
 			throws Throwable {
 
 		// Use reflection to invoke the method.
 		try {
 			ReflectionUtils.makeAccessible(method);
+			// 执行普通对象的方法，注意和@Configuration产生的代理对象的逻辑区别
 			return method.invoke(target, args);
 		}
 		catch (InvocationTargetException ex) {

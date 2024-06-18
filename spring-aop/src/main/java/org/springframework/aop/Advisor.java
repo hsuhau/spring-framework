@@ -30,6 +30,10 @@ import org.aopalliance.aop.Advice;
  * such as <b>before</b> and <b>after</b> advice, which need not be
  * implemented using interception.
  *
+ * <p>这个接口（Advisor）在Spring的AOP框架和AOP Alliance的拦截API之间充当桥梁的角色。它封装了通知（advice），并提供了一种检查通知是针对特定实例还是在实例间共享的方法。
+ *
+ * <p>需要注意的是，Spring AOP围绕拦截器和通知（advice）展开，允许开发人员以模块化和可重用的方式应用诸如日志记录、安全性和事务管理等横切关注点。Advisor接口是在Spring生态系统中实现这种面向切面编程范式的关键组成部分。
+ *
  * @author Rod Johnson
  */
 public interface Advisor {
